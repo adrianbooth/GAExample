@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -13,25 +12,21 @@ namespace GAExample
         private static readonly int Generations = 30;
         private static readonly double ChanceOfRandomMutation = 0.25;
 
-        private static readonly bool _outputChromosomeSelection = true;
-
         private static readonly double SecondBoundary = 1 - ChanceOfRandomMutation;
         private static readonly double FirstBoundary = (1 - ChanceOfRandomMutation) / 2;
         private static int _totalWeight;
-        static Dictionary<int, int> _parentSelectionCount;
 
         private static readonly Random Random;
         public static List<Chromosome> Population { get; set; }
         public static StringBuilder FileOutput { get; set; }
+        private static IPopulationPrinter _printer;
 
         static Program()
         {
             Random = new Random((int)DateTime.UtcNow.Ticks);
-
+            _printer = new ConsolePrinter();
             Population = new List<Chromosome>();
 
-            FileOutput = new StringBuilder();
-            FileOutput.AppendLine(@"""Best Solution"",""Standard Deviation""");
         }
 
         static void Main()
@@ -45,7 +40,7 @@ namespace GAExample
                 CreateOffspring();
             }
 
-            WriteResultsToFile();
+            _printer.WriteResultsToFile();
             Console.ReadLine();
         }
 
@@ -81,13 +76,12 @@ namespace GAExample
 
             _totalWeight = Population.Sum(e => e.Weight);
 
-            OutputPopulationStatistics();
+            _printer.OutputPopulationStatistics(Population);
+
         }
 
         private static void CreateOffspring()
         {
-            _parentSelectionCount = new Dictionary<int, int>();
-
             var offspring = new List<Chromosome>();
             do
             {
@@ -96,12 +90,8 @@ namespace GAExample
                 offspring.Add(ProduceOffspring(firstParent, secondParent));
             } while (offspring.Count < PopulationSize);
 
-            PrintSelectionFrequency();
-
             Population = offspring;
         }
-
-
 
         private static Chromosome ProduceOffspring(Chromosome firstParent, Chromosome secondParent)
         {
@@ -141,70 +131,8 @@ namespace GAExample
                 randomNumber = randomNumber - chromosome.Weight;
             }
 
-            RecordParentSelection(parent);
-
             return parent;
         }
 
-        private static void RecordParentSelection(Chromosome parent)
-        {
-            if (_outputChromosomeSelection)
-            {
-                if (_parentSelectionCount.ContainsKey(parent.Value))
-                {
-                    _parentSelectionCount[parent.Value] = _parentSelectionCount[parent.Value] + 1;
-                }
-                else
-                {
-                    _parentSelectionCount.Add(parent.Value, 1);
-                }
-            }
-        }
-
-        private static double StandardDeviation(IEnumerable<double> values)
-        {
-            double ret = 0;
-            if (!values.Any())
-            {
-                return ret;
-            }
-
-            var avg = values.Average();
-            var sum = values.Sum(d => Math.Pow(d - avg, 2));
-            ret = Math.Sqrt((sum) / (values.Count() - 1));
-            return ret;
-        }
-
-        private static void WriteResultsToFile()
-        {
-            File.WriteAllText("results.csv", FileOutput.ToString());
-        }
-
-        private static void OutputPopulationStatistics()
-        {
-            var bestSln = Population.Max(e => e.Solution);
-            var standardDeviation = StandardDeviation(Population.Select(e => (double)e.Value));
-            FileOutput.AppendLine($@"""{bestSln}"",""{standardDeviation}""");
-            Console.WriteLine($"Standard deviation: {standardDeviation} Best Solution: {bestSln} Individual value:{Population.First(e => e.Solution == bestSln)?.Value}");
-        }
-
-        /// <summary>
-        /// useful for debugging fitness function and balancing evolutionary pressure towards good solutions
-        /// </summary>
-        private static void PrintSelectionFrequency()
-        {
-            if (_outputChromosomeSelection)
-            {
-                _parentSelectionCount = new Dictionary<int, int>();
-
-                foreach (var chromosome in Population)
-                {
-                    if (_parentSelectionCount.ContainsKey(chromosome.Value))
-                    {
-                        Console.WriteLine($"{chromosome.Value}:   {_parentSelectionCount[chromosome.Value]}");
-                    }
-                }
-            }
-        }
     }
 }
