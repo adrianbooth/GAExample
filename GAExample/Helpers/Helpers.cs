@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GAExample
+namespace GAExample.Helpers
 {
     public static class Helpers
     {

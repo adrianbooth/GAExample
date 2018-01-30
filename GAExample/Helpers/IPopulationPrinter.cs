@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace GAExample
+namespace GAExample.Helpers
 {
     public interface IPopulationPrinter
     {
