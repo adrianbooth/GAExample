@@ -25,7 +25,7 @@ namespace GAExample
         static Program()
         {
             Random = new Random((int)DateTime.UtcNow.Ticks);
-            _printer = new ConsolePrinter();
+            _printer = new WebPagePrinter();
             Population = new List<Chromosome>();
 
         }
